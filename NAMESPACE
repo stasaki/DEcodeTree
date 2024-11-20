@@ -1,0 +1,18 @@
+# Export the main functions
+export(runDEcodeTreeModel)
+#export(buildAndEvaluateModel)
+#export(xgbTreeModelBuild)
+#export(eval_model_mlr)
+
+# Import functions from other packages
+importFrom(caret, createMultiFolds)
+importFrom(mlr, makeClassifTask, makeRegrTask, makeLearner, setHyperPars, train, tuneParams, generateHyperParsEffectData)
+importFrom(mlr, setAggregation, rmse)
+importFrom(ParamHelpers, makeParamSet, makeIntegerParam, makeNumericParam)
+importFrom(dplyr, mutate, bind_rows, summarise, group_by, arrange,inner_join)
+importFrom(parallel, makeCluster, stopCluster)
+importFrom(parallelMap, parallelStartSocket, parallelStop)
+importFrom(rminer, mmetric)
+
+# Import all functions from tibble
+import(tibble)

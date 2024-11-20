@@ -1,0 +1,23 @@
+Package: DEcodeTree
+Type: Package
+Title: What the Package Does (One Line, Title Case)
+Version: 0.1.0
+Author: Your Name
+Maintainer: Your Email <your.email@example.com>
+Description: More detailed description of what the package does.
+License: GPL-3
+Depends: R (>= 3.5.0)
+Imports:
+    xgboost,
+    mlr,
+    caret,
+    ParamHelpers,
+    parallel,
+    parallelMap,
+    rminer,
+    tidyverse,
+    tibble,
+    ggpubr,
+    viridis,
+    RColorBrewer
+RoxygenNote: 7.3.1
