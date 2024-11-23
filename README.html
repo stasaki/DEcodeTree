@@ -355,12 +355,13 @@ display: none;
 <p><strong>DEcodeTree</strong> is a machine learning model designed to
 predict differential expression statistics from gene regulatory
 features.</p>
-<div id="link-to-the-paper" class="section level2">
-<h2>📜 Link to the Paper</h2>
+<div id="link-to-the-paper" class="section level3">
+<h3>📜 Link to the Paper</h3>
 <p>Read our full research paper for more details:<br />
 <a href="https://www.biorxiv.org/content/10.1101/2024.10.23.619425v1"><strong>The
 YTHDF Proteins Shape the Brain Gene Signatures of Alzheimer’s
 Disease</strong></a></p>
+</div>
 <div id="installing" class="section level3">
 <h3>Installing</h3>
 <p>To install the DEcodeTree package, use the following commands:</p>
@@ -369,7 +370,9 @@ devtools::install_github(&quot;stasaki/DEcodeTree&quot;)</code></pre>
 </div>
 <div id="running-the-model" class="section level3">
 <h3>Running the model</h3>
-<pre class="r"><code># Load differential expression statistics for RNA-seq from DLPFC regions against cognitive decline in ROSMAP cohorts
+<pre class="r"><code>library(DEcodeTree)
+
+# Load differential expression statistics for RNA-seq from DLPFC regions against cognitive decline in ROSMAP cohorts
 deg_stat_data &lt;- readRDS(system.file(&quot;data&quot;, &quot;DLPFC_CogDec_DEG_stats.rds&quot;, package = &quot;DEcodeTree&quot;))
 
 # Run the DEcodeTree model using cell type information as predictors
@@ -383,10 +386,124 @@ runDEcodeTreeModel(
   num_samples = 10,
   num_cpus = 4
 )</code></pre>
+<hr />
+<div id="parameters" class="section level4">
+<h4>Parameters</h4>
+<table>
+<colgroup>
+<col width="13%" />
+<col width="72%" />
+<col width="13%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>Parameter</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>outcome</code></td>
+<td>A character string specifying the outcome variable (e.g., “logFC”,
+“tstat”).</td>
+<td><code>&quot;tstat&quot;</code></td>
+</tr>
+<tr class="even">
+<td><code>deg_stat</code></td>
+<td>A data frame containing differential expression statistics.</td>
+<td>Required</td>
+</tr>
+<tr class="odd">
+<td><code>feature_type</code></td>
+<td>Features to include (<code>&quot;base&quot;</code>, <code>&quot;RBP&quot;</code>,
+<code>&quot;miRNA&quot;</code>, <code>&quot;TF&quot;</code>, <code>&quot;cell_type&quot;</code>).</td>
+<td><code>c(&quot;base&quot;)</code></td>
+</tr>
+<tr class="even">
+<td><code>out_dir</code></td>
+<td>Output directory for results.</td>
+<td><code>&quot;./results/&quot;</code></td>
+</tr>
+<tr class="odd">
+<td><code>n_splits</code></td>
+<td>Number of data splits for cross-validation.</td>
+<td><code>5</code></td>
+</tr>
+<tr class="even">
+<td><code>metric</code></td>
+<td>Performance metrics (<code>&quot;COR&quot;</code>, <code>&quot;RMSE&quot;</code>).</td>
+<td><code>c(&quot;COR&quot;, &quot;RMSE&quot;)</code></td>
+</tr>
+<tr class="odd">
+<td><code>measures</code></td>
+<td>List of measures for performance evaluation compatible with
+<code>mlr</code>.</td>
+<td>Default measures</td>
+</tr>
+<tr class="even">
+<td><code>cv_folds</code></td>
+<td>Number of folds for cross-validation.</td>
+<td><code>5</code></td>
+</tr>
+<tr class="odd">
+<td><code>num_samples</code></td>
+<td>Number of hyperparameter tuning iterations.</td>
+<td><code>64</code></td>
+</tr>
+<tr class="even">
+<td><code>num_cpus</code></td>
+<td>Number of CPUs for parallel processing.</td>
+<td><code>4</code></td>
+</tr>
+<tr class="odd">
+<td><code>param_values</code></td>
+<td>Default hyperparameter values for XGBoost models.</td>
+<td>Predefined list</td>
+</tr>
+<tr class="even">
+<td><code>param_space</code></td>
+<td>Parameter set defining the hyperparameter optimization space.</td>
+<td>Predefined set</td>
+</tr>
+<tr class="odd">
+<td><code>save_model</code></td>
+<td>Whether to save trained models.</td>
+<td><code>TRUE</code></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div id="returns" class="section level4">
+<h4>Returns</h4>
+<p>Outputs saved to the specified directory include:</p>
+<ul>
+<li><strong>Evaluation Results</strong>: Cross-validation metrics (e.g.,
+COR, RMSE).</li>
+<li><strong>SHAP Scores</strong>: Feature importance scores for model
+interpretability.</li>
+<li><strong>Plots</strong>: Visualizations of evaluation metrics and
+SHAP scores.</li>
+</ul>
+<hr />
 </div>
 </div>
-<div id="license" class="section level2">
-<h2>License</h2>
+<div id="outputs" class="section level3">
+<h3>Outputs</h3>
+<ol style="list-style-type: decimal">
+<li><strong>Evaluation Results</strong>: Summary of model performance
+metrics (e.g., RMSE, correlation).</li>
+<li><strong>SHAP Values</strong>: Feature importance values for
+interpretability.</li>
+<li><strong>Plots</strong>: Visualizations of model performance and SHAP
+scores.</li>
+<li><strong>Trained Models</strong>: Serialized XGBoost models for
+future use.</li>
+</ol>
+<hr />
+</div>
+<div id="license" class="section level3">
+<h3>License</h3>
 <p>The code for this project is licensed under the <a href="LICENSE">BSD
 3-Clause License</a>. Gene regulatory features were prepared using the
 following databases. Please ensure compliance with the respective
