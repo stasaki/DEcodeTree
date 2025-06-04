@@ -2,7 +2,7 @@
 
 ### 📜 Link to the Paper
 Read our full research paper for more details:  
-[**The YTHDF Proteins Shape the Brain Gene Signatures of Alzheimer’s Disease**](https://www.biorxiv.org/content/10.1101/2024.10.23.619425v1)
+[**The YTHDF Proteins Shape the Brain Gene Signatures of Alzheimer's Disease**](https://www.biorxiv.org/content/10.1101/2024.10.23.619425v1)
 
 ### Installing
 To install the DEcodeTree package, use the following commands:
@@ -12,6 +12,10 @@ devtools::install_github("stasaki/DEcodeTree")
 ```
 
 ### Running the model
+
+#### Quick Test Run
+The following is a test run using only cell type information as predictors:
+
 ```r
 library(DEcodeTree)
 
@@ -31,6 +35,26 @@ runDEcodeTreeModel(
 )
 ```
 
+#### Full Feature Analysis
+To run the complete analysis with all regulatory features, use:
+
+> **⏱️ Runtime Warning**: The following analysis uses 16 CPU cores and may take 1-4 hours to complete depending on your system's performance. The model performs extensive hyperparameter tuning (64 iterations) and cross-validation across multiple feature types.
+
+```r
+runDEcodeTreeModel(
+  outcome = "tstat",                           # Predict t-statistics
+  deg_stat = deg_stat_data,                   # Our DE results
+  feature_type = c("base", "RBP", "miRNA", "TF", "cell_type"), # All regulatory features
+  out_dir = "./results/",                     # Output directory
+  n_splits = 5,                               # Cross-validation splits
+  metric = c("COR", "RMSE"),                  # Performance metrics
+  num_samples = 64,                           # Hyperparameter tuning iterations
+  num_cpus = 16                               # Parallel processing cores
+) 
+```
+
+#### Additional Examples
+We also provide an example of running DEcodeTree for TDP43 knockdown RNA-seq data in `TDP43_example.md`.
 
 ---
 
@@ -67,8 +91,4 @@ runDEcodeTreeModel(
 The code for this project is licensed under the [BSD 3-Clause License](LICENSE). Gene regulatory features were prepared using the following databases. Please ensure compliance with the respective licenses for each data source:
 - **Transcription factor binding targets**: [GTRD](https://doi.org/10.1093/nar/gky1128)  
 - **RNA-binding protein binding targets**: [POSTAR2](https://doi.org/10.1093/nar/gky830)  
-- **miRNA binding targets**: [TargetScan](https://doi.org/10.7554/eLife.05005)  
-
-
-
-
+- **miRNA binding targets**: [TargetScan](https://doi.org/10.7554/eLife.05005)

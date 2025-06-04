@@ -370,6 +370,10 @@ devtools::install_github(&quot;stasaki/DEcodeTree&quot;)</code></pre>
 </div>
 <div id="running-the-model" class="section level3">
 <h3>Running the model</h3>
+<div id="quick-test-run" class="section level4">
+<h4>Quick Test Run</h4>
+<p>The following is a test run using only cell type information as
+predictors:</p>
 <pre class="r"><code>library(DEcodeTree)
 
 # Load differential expression statistics for RNA-seq from DLPFC regions against cognitive decline in ROSMAP cohorts
@@ -386,7 +390,33 @@ runDEcodeTreeModel(
   num_samples = 10,
   num_cpus = 4
 )</code></pre>
+</div>
+<div id="full-feature-analysis" class="section level4">
+<h4>Full Feature Analysis</h4>
+<p>To run the complete analysis with all regulatory features, use:</p>
+<blockquote>
+<p><strong>⏱️ Runtime Warning</strong>: The following analysis uses 16
+CPU cores and may take 1-4 hours to complete depending on your system’s
+performance. The model performs extensive hyperparameter tuning (64
+iterations) and cross-validation across multiple feature types.</p>
+</blockquote>
+<pre class="r"><code>runDEcodeTreeModel(
+  outcome = &quot;tstat&quot;,                           # Predict t-statistics
+  deg_stat = deg_stat_data,                   # Our DE results
+  feature_type = c(&quot;base&quot;, &quot;RBP&quot;, &quot;miRNA&quot;, &quot;TF&quot;, &quot;cell_type&quot;), # All regulatory features
+  out_dir = &quot;./results/&quot;,                     # Output directory
+  n_splits = 5,                               # Cross-validation splits
+  metric = c(&quot;COR&quot;, &quot;RMSE&quot;),                  # Performance metrics
+  num_samples = 64,                           # Hyperparameter tuning iterations
+  num_cpus = 16                               # Parallel processing cores
+) </code></pre>
+</div>
+<div id="additional-examples" class="section level4">
+<h4>Additional Examples</h4>
+<p>We also provide an example of running DEcodeTree for TDP43 knockdown
+RNA-seq data in <code>TDP43_example.md</code>.</p>
 <hr />
+</div>
 <div id="parameters" class="section level4">
 <h4>Parameters</h4>
 <table>
