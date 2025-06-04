@@ -52,14 +52,6 @@ runDEcodeTreeModel(
 | `param_space`   | Parameter set defining the hyperparameter optimization space.                                  | Predefined set  |
 | `save_model`    | Whether to save trained models.                                                                | `TRUE`          |
 
-#### Returns
-
-Outputs saved to the specified directory include:
-
-- **Evaluation Results**: Cross-validation metrics (e.g., COR, RMSE).
-- **SHAP Scores**: Feature importance scores for model interpretability.
-- **Plots**: Visualizations of evaluation metrics and SHAP scores.
-
 ---
 
 ### Outputs

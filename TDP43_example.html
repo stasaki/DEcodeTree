@@ -11,7 +11,7 @@
 
 
 
-<title>README</title>
+<title>GEO_example</title>
 
 <script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
 // be compatible with the behavior of Pandoc < 2.8).
@@ -352,6 +352,8 @@ display: none;
 </div>
 
 
+<div id="decodetree-analysis-with-geo-data" class="section level1">
+<h1>DEcodeTree Analysis with GEO Data</h1>
 <p><strong>DEcodeTree</strong> is a machine learning model designed to
 predict differential expression statistics from gene regulatory
 features.</p>
@@ -362,33 +364,105 @@ features.</p>
 YTHDF Proteins Shape the Brain Gene Signatures of Alzheimer’s
 Disease</strong></a></p>
 </div>
-<div id="installing" class="section level3">
-<h3>Installing</h3>
-<p>To install the DEcodeTree package, use the following commands:</p>
-<pre class="r"><code>install.packages(&quot;devtools&quot;)
+<div id="complete-workflow-from-geo-data-to-decodetree-analysis" class="section level2">
+<h2>Complete Workflow: From GEO Data to DEcodeTree Analysis</h2>
+<p>This example demonstrates how to download experimental data from GEO
+and analyze it with DEcodeTree. We’ll use GSE122069, which contains
+RNA-seq data from TDP-43 knockdown experiments in neuronal cell lines.
+TDP-43 (TAR DNA-binding protein 43) is a critical RNA-binding protein
+involved in RNA processing and transport, and its dysfunction is
+implicated in neurodegenerative diseases like ALS and frontotemporal
+dementia.</p>
+<blockquote>
+<p><strong>⚠️ Computational Requirements</strong>: This analysis uses 16
+CPU cores and can take anywhere from 1 hour to several hours to
+complete, depending on your CPU performance and availability. Plan
+accordingly and ensure your system has sufficient computational
+resources.</p>
+</blockquote>
+<div id="step-1-install-required-packages" class="section level3">
+<h3>Step 1: Install Required Packages</h3>
+<pre class="r"><code># Install required packages
+install.packages(c(&quot;devtools&quot;, &quot;tidyverse&quot;, &quot;data.table&quot;, &quot;limma&quot;))
 devtools::install_github(&quot;stasaki/DEcodeTree&quot;)</code></pre>
 </div>
-<div id="running-the-model" class="section level3">
-<h3>Running the model</h3>
-<pre class="r"><code>library(DEcodeTree)
+<div id="step-2-download-and-load-data-from-geo" class="section level3">
+<h3>Step 2: Download and Load Data from GEO</h3>
+<pre class="r"><code>library(tidyverse)
+library(data.table)
+library(limma)
+library(DEcodeTree)
 
-# Load differential expression statistics for RNA-seq from DLPFC regions against cognitive decline in ROSMAP cohorts
-deg_stat_data &lt;- readRDS(system.file(&quot;data&quot;, &quot;DLPFC_CogDec_DEG_stats.rds&quot;, package = &quot;DEcodeTree&quot;))
+# Download RNA-seq data from GEO
+ftp_url &lt;- &quot;https://ftp.ncbi.nlm.nih.gov/geo/series/GSE122nnn/GSE122069/suppl/GSE122069%5FRSEM.gene.TPM.txt.gz&quot;
+destfile &lt;- &quot;GSE122069_RSEM.gene.TPM.txt.gz&quot;
+download.file(ftp_url, destfile, mode = &quot;wb&quot;)</code></pre>
+</div>
+<div id="step-3-process-expression-data" class="section level3">
+<h3>Step 3: Process Expression Data</h3>
+<pre class="r"><code># Load and process the expression matrix
+expr &lt;- fread(&quot;GSE122069_RSEM.gene.TPM.txt.gz&quot;) %&gt;%
+  mutate(V1 = gsub(&quot;\\|.+&quot;, &quot;&quot;, V1)) %&gt;%  # Remove gene symbols, keep only ENSEMBL IDs
+  as.data.frame() %&gt;%
+  column_to_rownames(&quot;V1&quot;) %&gt;%
+  as.matrix()
 
-# Run the DEcodeTree model using cell type information as predictors
+# Filter for ShySy cell line samples
+indx &lt;- grepl(&quot;ShySy&quot;, colnames(expr))
+expr_sub &lt;- expr[, indx]
+
+# Filter lowly expressed genes (keep genes with mean TPM &gt; 1)
+cat(&quot;Number of genes with mean TPM &gt; 1:&quot;, sum(rowMeans(expr_sub) &gt; 1), &quot;\n&quot;)
+indx &lt;- rowMeans(expr_sub) &gt; 1
+expr_sub &lt;- expr_sub[indx, ]
+
+# Log2 transform
+expr_sub &lt;- log2(expr_sub + 0.5)</code></pre>
+</div>
+<div id="step-4-perform-differential-expression-analysis" class="section level3">
+<h3>Step 4: Perform Differential Expression Analysis</h3>
+<pre class="r"><code># Set up experimental design (3 WT vs 3 KO samples)
+design &lt;- model.matrix(~ group, 
+                      data = data.frame(group = factor(c(rep(&quot;WT&quot;, 3), rep(&quot;KO&quot;, 3)), 
+                                                      levels = c(&quot;WT&quot;, &quot;KO&quot;))))
+
+# Fit linear model using limma
+fit &lt;- lmFit(expr_sub, design)
+fit &lt;- eBayes(fit)
+
+# Extract differential expression statistics
+deg_stat_data &lt;- topTable(fit, coef = &quot;groupKO&quot;, number = Inf, adjust.method = &quot;BH&quot;) %&gt;%
+  as.data.frame() %&gt;%
+  rownames_to_column(&quot;gene_id&quot;) %&gt;%
+  dplyr::select(gene_id, logFC, tstat = t)
+
+cat(&quot;Generated DE statistics for&quot;, nrow(deg_stat_data), &quot;genes\n&quot;)
+head(deg_stat_data)</code></pre>
+</div>
+<div id="step-5-run-decodetree-model" class="section level3">
+<h3>Step 5: Run DEcodeTree Model</h3>
+<blockquote>
+<p><strong>⏱️ Runtime Warning</strong>: The following analysis uses 16
+CPU cores and may take 1-4 hours to complete depending on your system’s
+performance. The model performs extensive hyperparameter tuning (64
+iterations) and cross-validation across multiple feature types.</p>
+</blockquote>
+<pre class="r"><code># Run DEcodeTree with comprehensive gene regulatory features
 runDEcodeTreeModel(
-  outcome = &quot;tstat&quot;,
-  deg_stat = deg_stat_data,
-  feature_type = c(&quot;cell_type&quot;),
-  out_dir = &quot;./results/&quot;,
-  n_splits = 5,
-  metric = c(&quot;COR&quot;, &quot;RMSE&quot;),
-  num_samples = 10,
-  num_cpus = 4
+  outcome = &quot;tstat&quot;,                           # Predict t-statistics
+  deg_stat = deg_stat_data,                   # Our DE results
+  feature_type = c(&quot;base&quot;, &quot;RBP&quot;, &quot;miRNA&quot;, &quot;TF&quot;), # All regulatory features
+  out_dir = &quot;./results/&quot;,                     # Output directory
+  n_splits = 5,                               # Cross-validation splits
+  metric = c(&quot;COR&quot;, &quot;RMSE&quot;),                  # Performance metrics
+  num_samples = 64,                           # Hyperparameter tuning iterations
+  num_cpus = 16                               # Parallel processing cores
 )</code></pre>
 <hr />
-<div id="parameters" class="section level4">
-<h4>Parameters</h4>
+</div>
+</div>
+<div id="parameter-reference" class="section level2">
+<h2>Parameter Reference</h2>
 <table>
 <colgroup>
 <col width="13%" />
@@ -475,9 +549,8 @@ runDEcodeTreeModel(
 </table>
 <hr />
 </div>
-</div>
-<div id="outputs" class="section level3">
-<h3>Outputs</h3>
+<div id="outputs" class="section level2">
+<h2>Outputs</h2>
 <ol style="list-style-type: decimal">
 <li><strong>Evaluation Results</strong>: Summary of model performance
 metrics (e.g., RMSE, correlation).</li>
@@ -490,8 +563,8 @@ future use.</li>
 </ol>
 <hr />
 </div>
-<div id="license" class="section level3">
-<h3>License</h3>
+<div id="license" class="section level2">
+<h2>License</h2>
 <p>The code for this project is licensed under the <a href="LICENSE">BSD
 3-Clause License</a>. Gene regulatory features were prepared using the
 following databases. Please ensure compliance with the respective
@@ -499,6 +572,7 @@ licenses for each data source: - <strong>Transcription factor binding
 targets</strong>: <a href="https://doi.org/10.1093/nar/gky1128">GTRD</a><br />
 - <strong>RNA-binding protein binding targets</strong>: <a href="https://doi.org/10.1093/nar/gky830">POSTAR2</a><br />
 - <strong>miRNA binding targets</strong>: <a href="https://doi.org/10.7554/eLife.05005">TargetScan</a></p>
+</div>
 </div>
 
 
